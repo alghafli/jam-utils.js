@@ -1,6 +1,6 @@
-:Date: 2024-11-19
+:Date: 2024-11-22
 
-:Version: 0.0.0
+:Version: 1.0.0
 
 :Authors:
 
@@ -21,7 +21,7 @@ What is JamUtils?
     
         - import scripts in local html files.
         - sleep function, allowing me to pause execution for a few seconds.
-        - web page keyboard shortcuts (see actions utils).
+        - web page keyboard shortcuts.
         - I plan to add any other functionalities I find useful and too general
           with little complication to be a dedicated library.
 

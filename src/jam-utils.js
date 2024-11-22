@@ -1,7 +1,7 @@
 /*
-:Date: 2024-11-19
+:Date: 2024-11-22
 
-:Version: 0.0.0
+:Version: 1.0.0
 
 :Authors:
 
@@ -22,7 +22,7 @@ What is JamUtils?
     
         - import scripts in local html files.
         - sleep function, allowing me to pause execution for a few seconds.
-        - web page keyboard shortcuts (see actions utils).
+        - web page keyboard shortcuts.
         - I plan to add any other functionalities I find useful and too general
           with little complication to be a dedicated library.
 
@@ -198,31 +198,20 @@ JamUtils.sleep = function (t) {
     return new Promise((res, rej) => setTimeout(res, 1000 * t));
 }
 
-//actions utils-----------------------------------------------------------------
+//shortcuts utils-----------------------------------------------------------------
 
-JamUtils.actions = {
-    actions: new Map(),
+JamUtils.shortcuts = {
     shortcuts: new Map(),
     
-    add(name, f) {
-        this.actions.set(name, f);
-    },
-    delete(name) {
-        this.actions.delete(name);
-    },
-    do(action, elem) {
-        this.actions.get(action)(elem);
-    },
-    
-    add_shortcut(elem, shortcut, action) {
+    add(elem, shortcut, evt) {
         if (!this.shortcuts.has(elem)) {
             this.shortcuts.set(elem, new Map());
         }
         
         let elem_shortcuts = this.shortcuts.get(elem);
-        elem_shortcuts.set(shortcut, action);
+        elem_shortcuts.set(shortcut, evt);
     },
-    delete_shortcut(elem, shortcut, action) {
+    delete(elem, shortcut) {
         let elem_shortcuts = this.shortcuts.get(elem);
         elem_shortcuts.delete(shortcut);
         
@@ -233,7 +222,7 @@ JamUtils.actions = {
     
     on_shortcut(evt) {
         //check shortcuts obj exists for element
-        let target_shortcuts = JamUtils.actions.shortcuts.get(evt.currentTarget);
+        let target_shortcuts = JamUtils.shortcuts.shortcuts.get(evt.currentTarget);
         
         if (target_shortcuts == undefined || evt.repeat) return;
         
@@ -244,16 +233,27 @@ JamUtils.actions = {
         if (evt.shiftKey) pressed.push('shift');
         pressed.push(evt.code);
         
-        let action = target_shortcuts.get(pressed.join('+'));
+        let new_evt = target_shortcuts.get(pressed.join('+'));
         
-        if (action == undefined) return;
+        if (new_evt == undefined) return;
         
-        //everything is fine. call callback function and stop event propagation
-        let cb = JamUtils.actions.actions.get(action);
-        cb(evt.currentTarget);
-        
+        //everything is fine. stop event propagation.
         evt.stopPropagation();
         evt.preventDefault();
+        
+        //call callback function
+        if (new_evt instanceof Function) {
+            new_evt(
+                {target: evt.currentTarget, currentTarget: evt.currentTarget}
+            );
+        }
+        //or get event object and dispatch it
+        else {
+            if (typeof new_evt == "string") {
+                new_evt = new Event(new_evt);
+            }
+            evt.currentTarget.dispatchEvent(new_evt);
+        }
     }
 };
 
