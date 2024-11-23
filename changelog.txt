@@ -1,6 +1,10 @@
 0.0.0:
-    * initial release
+    * initial release.
 1.0.0
-    * removed actions. only shortcuts now
+    * removed actions. only shortcuts now.
     * shortcuts accept callback function, event or string (event name that will
       be dispatched).
+1.1.0
+    * added for_each_selector method.
+    * added add_listeners_from_object method.
+    * added shortcuts.from_object method.

@@ -1,7 +1,7 @@
 /*
-:Date: 2024-11-22
+:Date: 2024-11-23
 
-:Version: 1.0.0
+:Version: 1.1.0
 
 :Authors:
 
@@ -198,25 +198,64 @@ JamUtils.sleep = function (t) {
     return new Promise((res, rej) => setTimeout(res, 1000 * t));
 }
 
+JamUtils.for_each_selector = function(obj, cb, options = {}) {
+    let root = options.root ?? document;
+    
+    for (selector in obj) {
+        let elems;
+        
+        if (options.all) {
+            elems = root.querySelectorAll(selector);
+        }
+        else {
+            elems = root.querySelector(selector);
+            elems = elems == null ? [] : [elems];
+        }
+        
+        if (elems.length == 0) {
+            console.warn(
+                `could not find any matching element for selector '${selector}'`
+            );
+            continue;
+        }
+        
+        for (let elem of elems) {
+            cb(elem, obj[selector]);
+        }
+    }
+};
+
+JamUtils.add_listeners_from_object = function (obj, options = {}) {
+    JamUtils.for_each_selector(
+        obj,
+        (elem, obj) => {
+            for (let evt_name in obj) {
+                elem.addEventListener(evt_name, obj[evt_name]);
+            }
+        },
+        options
+    );
+};
+
 //shortcuts utils-----------------------------------------------------------------
 
 JamUtils.shortcuts = {
     shortcuts: new Map(),
     
     add(elem, shortcut, evt) {
-        if (!this.shortcuts.has(elem)) {
-            this.shortcuts.set(elem, new Map());
+        if (!JamUtils.shortcuts.shortcuts.has(elem)) {
+            JamUtils.shortcuts.shortcuts.set(elem, new Map());
         }
         
-        let elem_shortcuts = this.shortcuts.get(elem);
+        let elem_shortcuts = JamUtils.shortcuts.shortcuts.get(elem);
         elem_shortcuts.set(shortcut, evt);
     },
     delete(elem, shortcut) {
-        let elem_shortcuts = this.shortcuts.get(elem);
+        let elem_shortcuts = JamUtils.shortcuts.shortcuts.get(elem);
         elem_shortcuts.delete(shortcut);
         
         if (elem_shortcuts.size == 0) {
-            this.shortcuts.delete(elem);
+            JamUtils.shortcuts.shortcuts.delete(elem);
         }
     },
     
@@ -254,6 +293,19 @@ JamUtils.shortcuts = {
             }
             evt.currentTarget.dispatchEvent(new_evt);
         }
-    }
+    },
+    
+    
+    from_object(obj, options = {}) {
+        JamUtils.for_each_selector(
+            obj,
+            (elem, obj) => {
+                for (let keys in obj) {
+                    JamUtils.shortcuts.add(elem, keys, obj[keys]);
+                }
+            },
+            options
+        );
+    },
 };
 
