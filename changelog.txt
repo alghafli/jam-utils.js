@@ -8,3 +8,14 @@
     * added for_each_selector method.
     * added add_listeners_from_object method.
     * added shortcuts.from_object method.
+
+1.2.1
+    * added JamUtils.calendars. main objective is to convert date from one
+      calendar to another. mainly from gregorian to islamic and vice versa.
+2.0.0
+    * support for RequireJS. if RequireJS is available, JamUtils is defined
+      using RequireJS define function. otherwise, it is defined as a global
+      object like before.
+    * removal of JamUtils.import. use RequireJS instead.
+    * bug fixes.
+    
