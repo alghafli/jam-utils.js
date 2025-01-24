@@ -356,7 +356,7 @@ available, JamUtils will be defined as a global object.
 */
 
 if (typeof define === 'function' && define.amd) {
-    define(() => JamUtils);
+    define(JamUtils);
 }
 else {
     window.JamUtils = JamUtils;
