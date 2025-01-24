@@ -1,7 +1,7 @@
 /*
-:Date: 2024-11-23
+:Date: 2025-01-24
 
-:Version: 1.1.0
+:Version: 2.0.0
 
 :Authors:
 
@@ -36,157 +36,24 @@ Usage:
     by the library.
 */
 
-//create JamUtils global constructor function
-function JamUtils(options = {}) {
-    for (let f of JamUtils.constructors) {
-        f.call(this, options);
-    }
-}
+'use strict'
+{   //start top level block to prevent global space variables
 
-JamUtils.constructors = [];
-
-//import utils------------------------------------------------------------------
-/*
-:Date: 2024-11-15
-
-:Version: 0.0.0
-
-:Authors:
-
-    * Mohammad Alghafli <thebsom@gmail.com>
-
-Import utils, allows you to import other javascript files if you cannot use
-builtin js import statement.
-
-JamUtils import is made mainly to be able to import scripts from other scripts
-used in local html files. All browsers I used does not allow you to use
-type="module" in any <script> tag unless you have a web server.
-
-Import other scripts:
-
-    To import a script located in content/scripts/example.js file relative to
-    the location of your html file:
-    
-        await JamUtils.import('content/scripts/example.js');
-        //execution will continue here after the script is loaded
-        //you can omit the await to get a promise that will resolve after
-        //successfully loading the script
-    
-    To import a script relative to a specific location, instantiate a JamUtils
-    object with base_url option:
-    
-        let importer = new JamUtils({base_url: 'content/scripts/'});
-        await importer.import('example.js');
-        //will import content/scripts/example.js
-        //again, execution will continue here after the script is loaded or you
-        //can omit the await to get a promise.
-    
-    To import a script relative to your js file, instantiate JamUtils object
-    without options:
-    
-        let importer = new JamUtils();
-        await importer.import('example.js');
-        //will import example.js located in the same directory as the
-        //calling script.
-        //again, execution will continue here after the script is loaded  or you
-        //can omit the await to get a promise.
-    
-    You can include attributes to your imported scripts using the attrs property
-    in the options parameter:
-    
-        JamUtils('example.js', {attrs: {referrerpolicy: 'no-referrer'}});
-    
-How import works:
-
-    - JamUtils imports is done by appending a script tag inside the head tag.
-    - JamUtils.import function returns a promise that resolves after the script
-      is loaded successfully.
-    - If an error occures when loading the script, the script tag will be
-      removed and the returned promise rejects.
-    - JamUtils only imports a js file once. All attempts to import a js file
-      after it was already imported will be ignored without error. JamUtils
-      resolves relative paths to absolute paths before checking if the file was
-      imported.
-*/
-
-JamUtils._import_on_load_cb = function (
-        resolve, absolute_url, name, alias, evt) {
-    
-    JamUtils.imported_modules.add(absolute_url);
-    if (name != undefined && alias != undefined) {
-        window[alias] = window[name];
-    }
-    evt.target.removeEventListener('error', JamUtils._import_on_error_cb);
-    resolve();
-}
-
-JamUtils._import_on_error_cb = function (reject, absolute_url, evt) {
-    evt.target.removeEventListener('load', JamUtils._import_on_load_cb);
-    evt.target.remove();
-    return reject(`failed to import script at ${absolute_url}`);
-}
-
-JamUtils.imported_modules = new Set();
-
-JamUtils.constructors.push(function (options) {
-        this.base_url = options.base_url ?? document.currentScript.src;
-    }
-)
-
-JamUtils.import = function (url, options = {}) {
-    let base_url = new URL(options.base_url ?? document.baseURI).href;
-    let absolute_url = new URL(url, base_url).href;
-    
-    if (this.imported_modules.has(absolute_url)) {
-        console.debug(
-            `ignored import of already imported script "${absolute_url}"`
-        );
-        return;
-    }
-    
-    let {promise, resolve, reject} = Promise.withResolvers();
-    
-    let script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = absolute_url;
-    let attrs = options.attrs ?? {};
-    for (let attr in attrs) {
-        script.setAttribute(attr, attrs[attr]);
-    }
-    
-    script.addEventListener(
-        'load',
-        JamUtils._import_on_load_cb.bind(
-            null, resolve, absolute_url, options.name, options.alias
-        ),
-        {once: true}
-    );
-    script.addEventListener(
-        'error', JamUtils._import_on_error_cb.bind(null, reject, absolute_url), {once: true}
-    );
-    
-    document.head.append(script);
-    
-    return promise;
-}
-
-JamUtils.prototype.import = function (url, options = {}) {
-    options.base_url = this.base_url;
-    return this.constructor.import(url, options);
-}
+//create JamUtils
+let JamUtils = {}
 
 //misc utils--------------------------------------------------------------------
 
 /*
-:Date: 2024-11-15
+:Date: 2025-01-24
 
-:Version: 0.0.0
+:Version: 2.0.0
 
 :Authors:
 
     * Mohammad Alghafli <thebsom@gmail.com>
 
-Misc utils. Currently only has a sleep function.
+Misc utils.
 
 sleep function:
 
@@ -201,7 +68,7 @@ JamUtils.sleep = function (t) {
 JamUtils.for_each_selector = function(obj, cb, options = {}) {
     let root = options.root ?? document;
     
-    for (selector in obj) {
+    for (let selector in obj) {
         let elems;
         
         if (options.all) {
@@ -238,6 +105,16 @@ JamUtils.add_listeners_from_object = function (obj, options = {}) {
 };
 
 //shortcuts utils-----------------------------------------------------------------
+
+/*
+:Date: 2025-01-24
+
+:Version: 2.0.0
+
+:Authors:
+
+    * Mohammad Alghafli <thebsom@gmail.com>
+*/
 
 JamUtils.shortcuts = {
     shortcuts: new Map(),
@@ -309,3 +186,180 @@ JamUtils.shortcuts = {
     },
 };
 
+//calendar utils-----------------------------------------------------------------
+
+/*
+:Date: 2025-01-24
+
+:Version: 2.0.0
+
+:Authors:
+
+    * Mohammad Alghafli <thebsom@gmail.com>
+
+Calendar converter. mainly made to convert between gregorian and islamic
+calendars.
+
+to convert a javascript date object:
+    let my_date = new Date();
+    let islamic_date = JamUtils.calendars.from_native(my_date, 'islamic');
+    //now islamic_date is an object with properties {year, month, day} after
+    //conversion to islamic date.
+
+to convert an object of {year, month, day} to javascript date object:
+    let islamic_date = {year: 1440, month: 10, day: 13};
+    let my_date = JamUtils.calendars.to_native(islamic_date, 'islamic');
+
+to convert an object of {year, month, day} from calendar to calendar:
+    let islamic_date = {year: 1440, month: 10, day: 13};
+    let gregorian_date = JamUtils.calendars.convert(islamic_date, 'islamic', 'gregorian');
+    //converts from islamic to gregorian.
+*/
+
+JamUtils.calendars = {
+    NATIVE_CALENDAR: 'gregory',
+    
+    MULTIPLIERS: {
+        'year': ['min_days', 'min_months'],
+        'month': ['min_days'],
+        'day': [],
+    },
+    
+    calendars: {
+        gregory: {
+            min_days: 28,
+            min_months: 12,
+        },
+        islamic: {
+            min_days: 29,
+            min_months: 12,
+        },
+        'islamic-umalqura': {
+            min_days: 29,
+            min_months: 12,
+        },
+        'islamic-tbla': {
+            min_days: 29,
+            min_months: 12,
+        },
+        'islamic-civil': {
+            min_days: 29,
+            min_months: 12,
+        },
+        'islamic-rgsa': {
+            min_days: 29,
+            min_months: 12,
+        },
+        persian: {
+            min_days: 29,
+            min_months: 12,
+        },
+    },
+    
+    add(name, min_days, min_months) {
+        this.calendars[name] = {min_days, min_months};
+    },
+    
+    delete(name) {
+        delete this.calendars[name];
+    },
+    
+    convert(date, source='gregory', target='islamic') {
+        let native_date = this.to_native(date, source);
+        return this.from_native(native_date, target);
+    },
+    
+    to_native(date, calendar) {
+        if (calendar == this.NATIVE_CALENDAR) {
+            return new Date(date.year, date.month - 1, date.day);
+        }
+        
+        let today = new Date();
+        let result = {
+            year: today.getFullYear(),
+            month: today.getMonth() + 1,
+            day: today.getDate()
+        };
+        
+        let converter = Intl.DateTimeFormat('en', {calendar: calendar});
+        
+        for (let part of ['year', 'month', 'day']) {
+            let error = Number.POSITIVE_INFINITY;
+            //cycles would probably be very few.
+            //setting max cycles only to discover bugs in the loop.
+            for (let cycles = 10;error != 0;cycles--) {
+                if (cycles <= 0) {
+                    let msg = 'max approximation cycles exceeded. ' +
+                        'is date conversion buggy?';
+                }
+                
+                let native_date = new Date(
+                    result.year,
+                    result.month - 1,
+                    result.day
+                );
+                
+                let approx = {};
+                converter.formatToParts(native_date).forEach(
+                    obj => {
+                        approx[obj.type] = Number(obj.value);
+                    }
+                );
+                
+                error = date[part] - approx[part];
+                
+                result.year = native_date.getFullYear();
+                result.month = native_date.getMonth() + 1;
+                result.day = native_date.getDate();
+                
+                for (let multiplier of this.MULTIPLIERS[part]) {
+                    error *= this.calendars[calendar][multiplier];
+                }
+                
+                result.day += error;
+            }
+        }
+        
+        return new Date(result.year, result.month - 1, result.day);
+    },
+    
+    from_native(date, calendar) {
+        let converter = Intl.DateTimeFormat('en', {calendar: calendar});
+        let converted = {};
+        converter.formatToParts(date).forEach(
+            obj => {
+                converted[obj.type] = Number(obj.value);
+            }
+        );
+        
+        return {
+            year: converted.year,
+            month: converted.month,
+            day: converted.day
+        };
+    }
+};
+
+//define module for requirejs--------------------------------------------------------------------
+
+/*
+:Date: 2025-01-24
+
+:Version: 2.0.0
+
+:Authors:
+
+    * Mohammad Alghafli <thebsom@gmail.com>
+
+Define JamUtils object to be required by requirejs. If requirejs is not
+available, JamUtils will be defined as a global object.
+*/
+
+if (typeof define === 'function' && define.amd) {
+    define(() => JamUtils);
+}
+else {
+    window.JamUtils = JamUtils;
+}
+
+}   //end top level block to prevent global space variables
