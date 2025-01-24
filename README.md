@@ -1,6 +1,6 @@
-:Date: 2024-11-23
+:Date: 2025-01-24
 
-:Version: 1.1.0
+:Version: 2.0.0
 
 :Authors:
 
@@ -19,18 +19,29 @@ What is JamUtils?
 
     JamUtils was created to help me do the following:
     
-        - import scripts in local html files.
         - sleep function, allowing me to pause execution for a few seconds.
         - web page keyboard shortcuts.
         - I plan to add any other functionalities I find useful and too general
           with little complication to be a dedicated library.
 
 Usage:
-
-    Add jam-utils.js in a <script> tag in your html file.
+    
+    Require via require.js:
+    
+    <script src="require.js"></script>
+    <script>
+        requirejs(
+            'jam-utils',
+            function(JamUtils) {
+                //now you have JamUtils object
+            }
+        );
+    </script>
+    
+    Or add jam-utils.js in a <script> tag in your html file:
     
     <script src="path-to-jam-utils.js"></script>
     
-    You will get a JamUtils global object with all the functionalities provided
-    by the library.
+    If you add as a script tag directly, you will get a JamUtils global object
+    with all the functionalities provided by the library.
 
