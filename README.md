@@ -1,19 +1,12 @@
-:Date: 2025-01-24
+:Date: 2025-09-13
 
-:Version: 2.0.0
+:Version: 2.1.0
 
 :Authors:
 
     * Mohammad Alghafli <thebsom@gmail.com>
 
 JamUtils, simple js utilities I use.
-
-The problem:
-
-    I was happy to see the import statement and modules in javascript.
-    Unfortunately, import does not work in local files and we are forced to go
-    back and use all the <script> tags again in our html files. On top of  that,
-    many js libraries I used have funny behaviour when imported in the browser.
 
 What is JamUtils?
 
