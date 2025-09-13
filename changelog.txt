@@ -18,4 +18,11 @@
       object like before.
     * removal of JamUtils.import. use RequireJS instead.
     * bug fixes.
+2.1.0
+    * Added JamUtils.events. it allows you to add event listeners with
+      modifiers.
+    * Modified JamUtils.add_listeners_from_objects to support modifiers in event
+      names.
+    * JamUtils.shortcuts is deprecated. it will give warning if used. However,
+      it is still working. use event names with modifiers instead.
     
